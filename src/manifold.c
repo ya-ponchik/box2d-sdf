@@ -125,7 +125,7 @@ b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform x
 {
 	B2_UNUSED( xfB );
 	MinimumSignedDistance min = init_minimum_signed_distance();
-	int const sides = b2MaxInt(2 * SDF_MIN_HALF_CIRCLE_CHECKS, 2 * B2_PI * circleA->radius / SDF_DT_C);
+	int const sides = b2MaxInt(2 * SDF_MIN_HALF_CIRCLE_CHECKS, (int)(2 * B2_PI * circleA->radius / SDF_DT_C));
 	b2CosSin const increment = b2ComputeCosSin(2 * B2_PI / sides);
 	b2Vec2 rot = { 1, 0 };
 	for (int i = 0; i < sides; ++i) {
@@ -142,7 +142,7 @@ b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transfor
 	for (int i = 0; i < polygonA->count; ++i) {
 		b2Vec2 const current = b2TransformPoint(xfA, polygonA->vertices[i]);
 		b2Vec2 const next = b2TransformPoint(xfA, polygonA->vertices[(i + 1) % polygonA->count]);
-		int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, b2Length(b2Sub(next, current)) / SDF_DT_C);
+		int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, (int)(b2Length(b2Sub(next, current)) / SDF_DT_C));
 		for (int j = 1; j < checks; ++j)
 			// If we include 0 and 1, the polygon will no longer slide and may sometimes explode.
 			update_minimum_signed_distance(circleB, b2MulAdd(current, (float)j / checks, b2Sub(next, current)), &min);
@@ -158,7 +158,7 @@ b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transfor
 	b2Vec2 const p2 = b2TransformPoint(xfA, capsuleA->center2);
 	if (b2LengthSquared(b2Sub(p2, p1)) < B2_LINEAR_SLOP)
 		return collide_sdf_terrain_and_circle(&((b2Circle){ capsuleA->center1, capsuleA->radius }), xfA, circleB, xfB);
-	int const sides = b2MaxInt(SDF_MIN_HALF_CIRCLE_CHECKS, B2_PI * capsuleA->radius / SDF_DT_C);
+	int const sides = b2MaxInt(SDF_MIN_HALF_CIRCLE_CHECKS, (int)(B2_PI * capsuleA->radius / SDF_DT_C));
 	// check: dt_rad = dt_C / r
 	b2CosSin const increment = b2ComputeCosSin(B2_PI / sides);
 	b2Vec2 const axis = b2Normalize(b2Sub(p2, p1));
@@ -170,7 +170,7 @@ b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transfor
 		update_minimum_signed_distance(circleB, b2MulAdd(p2, -capsuleA->radius, rot), &min);
 		rot = b2RotateVector((b2Rot){ increment.cosine, increment.sine }, rot);
 	}
-	int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, b2Length(b2Sub(p2, p1)) / SDF_DT_C); 
+	int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, (int)(b2Length(b2Sub(p2, p1)) / SDF_DT_C)); 
 	for (int j = 1; j < checks; ++j) {
 		update_minimum_signed_distance(circleB, b2MulAdd(p1_left, (float)j / checks, b2Sub(p2, p1)), &min);
 		update_minimum_signed_distance(circleB, b2MulAdd(p1_right, (float)j / checks, b2Sub(p2, p1)), &min);

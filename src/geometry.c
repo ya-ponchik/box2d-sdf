@@ -602,14 +602,14 @@ b2CastOutput raycast_sdf_terrain(b2RayCastInput const* input, SDFTerrainShape co
 	// Sampling provides the distance to the closest surface.
 	// If the SDF is incorrect, that distance can be less than the actual distance, but not greater, I think.
 
-	float const sample = shape->sampler(input->origin, shape->center, shape->half_size);
-	if (sample <= 0) {
+	float const first_sample = shape->sampler(input->origin, shape->center, shape->half_size);
+	if (first_sample <= 0) {
 		output.point = input->origin;
 		output.hit = true;
 		return output;
 	}
 
-	float traveled_length = sample;
+	float traveled_length = first_sample;
 	// I think I have never experienced an infinite loop, but that was before I refactored this function...
 	while (true) {
 		if (input->maxFraction * ray_length < traveled_length)
