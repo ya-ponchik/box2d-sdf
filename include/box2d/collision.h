@@ -110,6 +110,15 @@ typedef struct b2Circle
 	float radius;
 } b2Circle;
 
+typedef float sdf_sampler(b2Vec2 position, b2Vec2 center, b2Vec2 half_size);
+
+typedef struct SDFTerrainShape {
+	sdf_sampler* sampler;
+	/// The local center. Use this to position a chunk of ground. The body's global position is ignored.
+	b2Vec2 center;
+	b2Vec2 half_size;
+} SDFTerrainShape;
+
 /// A solid capsule can be viewed as two semicircles connected
 /// by a rectangle.
 typedef struct b2Capsule
@@ -236,6 +245,9 @@ B2_API b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density );
 /// Compute the bounding box of a transformed circle
 B2_API b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2Transform transform );
 
+/// Compute the bounding box of a transformed SDF terrain
+B2_API b2AABB compute_sdf_terrain_aabb(SDFTerrainShape const*, b2Transform);
+
 /// Compute the bounding box of a transformed capsule
 B2_API b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2Transform transform );
 
@@ -248,6 +260,9 @@ B2_API b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2Transform transfor
 /// Test a point for overlap with a circle in local space
 B2_API bool b2PointInCircle( b2Vec2 point, const b2Circle* shape );
 
+/// Test a point for overlap with a SDF terrain in local space
+B2_API bool point_in_sdf_terrain(b2Vec2 point, SDFTerrainShape const*);
+
 /// Test a point for overlap with a capsule in local space
 B2_API bool b2PointInCapsule( b2Vec2 point, const b2Capsule* shape );
 
@@ -256,6 +271,9 @@ B2_API bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape );
 
 /// Ray cast versus circle shape in local space. Initial overlap is treated as a miss.
 B2_API b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape );
+
+/// Ray cast versus SDF terrain shape in local space. Initial overlap is treated as a hit.
+B2_API b2CastOutput raycast_sdf_terrain(b2RayCastInput const*, SDFTerrainShape const*);
 
 /// Ray cast versus capsule shape in local space. Initial overlap is treated as a miss.
 B2_API b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* shape );
@@ -554,9 +572,15 @@ typedef struct b2Manifold
 /// Compute the contact manifold between two circles
 B2_API b2Manifold b2CollideCircles( const b2Circle* circleA, b2Transform xfA, const b2Circle* circleB, b2Transform xfB );
 
+/// Compute the contact manifold between an SDF terrain and a circle
+B2_API b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB);
+
 /// Compute the contact manifold between a capsule and circle
 B2_API b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2Transform xfA, const b2Circle* circleB,
 											 b2Transform xfB );
+
+/// Compute the contact manifold between an SDF terrain and a capsule
+B2_API b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB);
 
 /// Compute the contact manifold between an segment and a circle
 B2_API b2Manifold b2CollideSegmentAndCircle( const b2Segment* segmentA, b2Transform xfA, const b2Circle* circleB,
@@ -565,6 +589,9 @@ B2_API b2Manifold b2CollideSegmentAndCircle( const b2Segment* segmentA, b2Transf
 /// Compute the contact manifold between a polygon and a circle
 B2_API b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA, const b2Circle* circleB,
 											 b2Transform xfB );
+
+/// Compute the contact manifold between an SDF terrain and a polygon
+B2_API b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB);
 
 /// Compute the contact manifold between a capsule and circle
 B2_API b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const b2Capsule* capsuleB, b2Transform xfB );

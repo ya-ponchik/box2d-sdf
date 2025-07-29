@@ -82,6 +82,10 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 			shape->circle = *(const b2Circle*)geometry;
 			break;
 
+		case sdf_terrain_shape:
+			shape->sdf_terrain = *(const SDFTerrainShape*)geometry;
+			break;
+
 		case b2_polygonShape:
 			shape->polygon = *(const b2Polygon*)geometry;
 			break;
@@ -194,6 +198,11 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Circle* circle )
 {
 	return b2CreateShape( bodyId, def, circle, b2_circleShape );
+}
+
+b2ShapeId create_sdf_terrain_shape(b2BodyId body_id, b2ShapeDef const* def, SDFTerrainShape const* shape)
+{
+	return b2CreateShape(body_id, def, shape, sdf_terrain_shape);
 }
 
 b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule )
@@ -583,6 +592,8 @@ b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2Transform xf )
 			return b2ComputeCapsuleAABB( &shape->capsule, xf );
 		case b2_circleShape:
 			return b2ComputeCircleAABB( &shape->circle, xf );
+		case sdf_terrain_shape:
+			return compute_sdf_terrain_aabb(&shape->sdf_terrain, xf);
 		case b2_polygonShape:
 			return b2ComputePolygonAABB( &shape->polygon, xf );
 		case b2_segmentShape:
@@ -612,6 +623,7 @@ b2Vec2 b2GetShapeCentroid( const b2Shape* shape )
 			return b2Lerp( shape->segment.point1, shape->segment.point2, 0.5f );
 		case b2_chainSegmentShape:
 			return b2Lerp( shape->chainSegment.segment.point1, shape->chainSegment.segment.point2, 0.5f );
+		// Right now, the result of the function should never be used for sdf_terrain_shape.
 		default:
 			return b2Vec2_zero;
 	}
@@ -647,6 +659,7 @@ float b2GetShapePerimeter( const b2Shape* shape )
 			return 2.0f * b2Length( b2Sub( shape->segment.point1, shape->segment.point2 ) );
 		case b2_chainSegmentShape:
 			return 2.0f * b2Length( b2Sub( shape->chainSegment.segment.point1, shape->chainSegment.segment.point2 ) );
+		// sdf_terrain_shape: Right now, the function is not used anywhere.
 		default:
 			return 0.0f;
 	}
@@ -699,6 +712,7 @@ float b2GetShapeProjectedPerimeter( const b2Shape* shape, b2Vec2 line )
 			return b2AbsFloat( value2 - value1 );
 		}
 
+		// Right now, the result of the function should never be used for sdf_terrain_shape.
 		default:
 			return 0.0f;
 	}
@@ -740,6 +754,13 @@ b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter )
 			float radius = shape->circle.radius;
 			extent.minExtent = radius;
 			extent.maxExtent = b2Length( b2Sub( shape->circle.center, localCenter ) ) + radius;
+		}
+		break;
+
+		// Right now, the result of the function should never be used for SDF terrain.
+		case sdf_terrain_shape:
+		{
+			B2_ASSERT( false );
 		}
 		break;
 
@@ -804,6 +825,9 @@ b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, 
 		case b2_circleShape:
 			output = b2RayCastCircle( &localInput, &shape->circle );
 			break;
+		case sdf_terrain_shape:
+			output = raycast_sdf_terrain( &localInput, &shape->sdf_terrain );
+			break;
 		case b2_polygonShape:
 			output = b2RayCastPolygon( &localInput, &shape->polygon );
 			break;
@@ -851,6 +875,7 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 		case b2_chainSegmentShape:
 			output = b2ShapeCastSegment( &localInput, &shape->chainSegment.segment );
 			break;
+		// Not implemented for sdf_terrain_shape
 		default:
 			return output;
 	}
@@ -935,6 +960,7 @@ b2ShapeProxy b2MakeShapeDistanceProxy( const b2Shape* shape )
 			return b2MakeProxy( &shape->chainSegment.segment.point1, 2, 0.0f );
 		default:
 		{
+			// Right now, the result of the function should never be used for sdf_terrain_shape.
 			B2_ASSERT( false );
 			b2ShapeProxy empty = { 0 };
 			return empty;
@@ -988,6 +1014,9 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	{
 		case b2_capsuleShape:
 			return b2PointInCapsule( localPoint, &shape->capsule );
+		
+		case sdf_terrain_shape:
+			return point_in_sdf_terrain( localPoint, &shape->sdf_terrain );
 
 		case b2_circleShape:
 			return b2PointInCircle( localPoint, &shape->circle );
@@ -1023,6 +1052,10 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 
 		case b2_circleShape:
 			output = b2RayCastCircle( &localInput, &shape->circle );
+			break;
+
+		case sdf_terrain_shape:
+			output = raycast_sdf_terrain( &localInput, &shape->sdf_terrain );
 			break;
 
 		case b2_segmentShape:

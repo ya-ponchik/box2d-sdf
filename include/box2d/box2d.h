@@ -480,6 +480,11 @@ B2_API b2AABB b2Body_ComputeAABB( b2BodyId bodyId );
 /// @return the shape id for accessing the shape
 B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Circle* circle );
 
+/// Create a SDF terrain shape and attach it to a body. The shape definition and geometry are fully cloned.
+/// Contacts are not created until the next time step.
+/// @return the shape id for accessing the shape
+B2_API b2ShapeId create_sdf_terrain_shape(b2BodyId, b2ShapeDef const*, SDFTerrainShape const*);
+
 /// Create a line segment shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
 /// @return the shape id for accessing the shape

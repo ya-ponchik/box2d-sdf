@@ -38,6 +38,7 @@ typedef struct b2Shape
 	{
 		b2Capsule capsule;
 		b2Circle circle;
+		SDFTerrainShape sdf_terrain;
 		b2Polygon polygon;
 		b2Segment segment;
 		b2ChainSegment chainSegment;
@@ -114,6 +115,8 @@ static inline float b2GetShapeRadius( const b2Shape* shape )
 			return shape->circle.radius;
 		case b2_polygonShape:
 			return shape->polygon.radius;
+		case sdf_terrain_shape:
+			return 0.0f;
 		default:
 			return 0.0f;
 	}

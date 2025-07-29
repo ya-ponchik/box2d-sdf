@@ -27,6 +27,9 @@
 
 #include <imgui.h>
 
+#include <fstream> 
+#include <array>
+
 #define BUFFER_OFFSET( x ) ( (const void*)( x ) )
 
 #define SHADER_TEXT( x ) "#version 330\n" #x
@@ -208,6 +211,91 @@ struct GLBackground
 	GLint m_resolutionUniform;
 	GLint m_baseColorUniform;
 };
+
+void SDFTerrain::create()
+{
+	constexpr auto vertex_shader = R"(
+		#version 330
+
+		layout(location = 0) in vec2 v_position;
+
+		void main(void)
+		{
+			gl_Position = vec4(v_position, 0.0f, 1.0f);
+		}
+	)";
+	std::ifstream fragment_shader_file("samples/data/sdf_terrain.fs");
+	std::ifstream sdf_code_file("samples/SDF.h");
+	std::string fragment_shader((std::istreambuf_iterator<char>(fragment_shader_file)), std::istreambuf_iterator<char>());
+	std::string const sdf_code((std::istreambuf_iterator<char>(sdf_code_file)), std::istreambuf_iterator<char>());
+	constexpr std::string_view to_replace = "// THIS COMMENT WILL BE REPLACED BY CODE AT RUNTIME";
+	fragment_shader.replace(fragment_shader.find(to_replace), to_replace.length(), sdf_code);
+	m_program_id = CreateProgramFromStrings(vertex_shader, fragment_shader.c_str());
+
+	m_zoom_uniform = glGetUniformLocation(m_program_id, "pixel_to_meter_ratio");
+	m_center_uniform = glGetUniformLocation(m_program_id, "center");
+	m_time_uniform = glGetUniformLocation(m_program_id, "test_time");
+
+	constexpr auto vertex_attribute = 0;
+
+	// Generate
+	glGenVertexArrays(1, &m_vao_id);
+	glGenBuffers(1, &m_vbo_id);
+
+	glBindVertexArray(m_vao_id);
+	glEnableVertexAttribArray(vertex_attribute);
+
+	constexpr auto vertices = std::to_array<b2Vec2>({ { -1, -1 }, { 3, -1 }, { -1, 3 } });
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_id);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(vertex_attribute, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+
+	CheckOpenGL();
+
+	// Cleanup
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+void SDFTerrain::destroy()
+{
+	if (m_vao_id) {
+		glDeleteVertexArrays(1, &m_vao_id);
+		glDeleteBuffers(1, &m_vbo_id);
+		m_vao_id = 0;
+		m_vbo_id = 0;
+	}
+	if (m_program_id) {
+		glDeleteProgram(m_program_id);
+		m_program_id = 0;
+	}
+}
+
+void SDFTerrain::draw(Camera const& camera, struct GLFWwindow& window) const
+{
+	glUseProgram(m_program_id);
+
+	float scale;
+	glfwGetWindowContentScale(&window, &scale, &scale);
+
+	auto const pixel_to_meter_ratio = 1.0f / (camera.m_height / camera.m_zoom / 2 * scale);
+
+	glUniform1f(m_zoom_uniform, pixel_to_meter_ratio);
+	glUniform2f(
+		m_center_uniform,
+		0.0f - camera.m_center.x + camera.m_width * 0.5f * pixel_to_meter_ratio * scale,
+		0.0f - camera.m_center.y + camera.m_height * 0.5f * pixel_to_meter_ratio * scale
+	);
+	glUniform1f(m_time_uniform, static_cast<float>(glfwGetTime()));
+
+	glBindVertexArray(m_vao_id);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_id);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+}
 
 struct PointData
 {
@@ -1218,6 +1306,7 @@ void Draw::Create( Camera* camera )
 	m_camera = camera;
 	m_background = new GLBackground;
 	m_background->Create();
+	m_sdf_terrain.create();
 	m_points = new GLPoints;
 	m_points->Create();
 	m_lines = new GLLines;
@@ -1268,6 +1357,8 @@ void Draw::Destroy()
 	m_background->Destroy();
 	delete m_background;
 	m_background = nullptr;
+
+	m_sdf_terrain.destroy();
 
 	m_points->Destroy();
 	delete m_points;

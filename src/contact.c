@@ -73,6 +73,24 @@ static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2Transform xfA, cons
 	return b2CollideCircles( &shapeA->circle, xfA, &shapeB->circle, xfB );
 }
 
+static b2Manifold sdf_terrain_and_circle_manifold(b2Shape const* shapeA, b2Transform xfA, b2Shape const* shapeB, b2Transform xfB, b2SimplexCache* cache)
+{
+	B2_UNUSED( cache );
+	return collide_sdf_terrain_and_circle(&shapeB->circle, xfB, &shapeA->sdf_terrain, xfA);
+}
+
+static b2Manifold sdf_terrain_and_capsule_manifold(b2Shape const* shapeA, b2Transform xfA, b2Shape const* shapeB, b2Transform xfB, b2SimplexCache* cache)
+{
+	B2_UNUSED( cache );
+	return collide_sdf_terrain_and_capsule(&shapeB->capsule, xfB, &shapeA->sdf_terrain, xfA);
+}
+
+static b2Manifold sdf_terrain_and_polygon_manifold(b2Shape const* shapeA, b2Transform xfA, b2Shape const* shapeB, b2Transform xfB, b2SimplexCache* cache)
+{
+	B2_UNUSED( cache );
+	return collide_sdf_terrain_and_polygon(&shapeB->polygon, xfB, &shapeA->sdf_terrain, xfA);
+}
+
 static b2Manifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											  b2SimplexCache* cache )
 {
@@ -168,9 +186,12 @@ void b2InitializeContactRegisters( void )
 	if ( s_initialized == false )
 	{
 		b2AddType( b2CircleManifold, b2_circleShape, b2_circleShape );
+		b2AddType( sdf_terrain_and_circle_manifold, sdf_terrain_shape, b2_circleShape );
 		b2AddType( b2CapsuleAndCircleManifold, b2_capsuleShape, b2_circleShape );
+		b2AddType( sdf_terrain_and_capsule_manifold, sdf_terrain_shape, b2_capsuleShape );
 		b2AddType( b2CapsuleManifold, b2_capsuleShape, b2_capsuleShape );
 		b2AddType( b2PolygonAndCircleManifold, b2_polygonShape, b2_circleShape );
+		b2AddType( sdf_terrain_and_polygon_manifold, sdf_terrain_shape, b2_polygonShape );
 		b2AddType( b2PolygonAndCapsuleManifold, b2_polygonShape, b2_capsuleShape );
 		b2AddType( b2PolygonManifold, b2_polygonShape, b2_polygonShape );
 		b2AddType( b2SegmentAndCircleManifold, b2_segmentShape, b2_circleShape );

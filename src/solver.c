@@ -229,6 +229,9 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
+	if (shape->type == sdf_terrain_shape)
+		return true;
+
 	// Skip same body
 	if ( shape->bodyId == fastShape->bodyId )
 	{

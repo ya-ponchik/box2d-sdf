@@ -407,6 +407,12 @@ b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2Transform xf )
 	return aabb;
 }
 
+b2AABB compute_sdf_terrain_aabb(SDFTerrainShape const* shape, b2Transform xf)
+{
+	b2Vec2 const p = b2TransformPoint(xf, shape->center);
+	return (b2AABB){ { p.x - shape->half_size.x, p.y - shape->half_size.y }, { p.x + shape->half_size.x, p.y + shape->half_size.y } };
+}
+
 b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2Transform xf )
 {
 	b2Vec2 v1 = b2TransformPoint( xf, shape->center1 );
@@ -457,6 +463,11 @@ bool b2PointInCircle( b2Vec2 point, const b2Circle* shape )
 {
 	b2Vec2 center = shape->center;
 	return b2DistanceSquared( point, center ) <= shape->radius * shape->radius;
+}
+
+bool point_in_sdf_terrain(b2Vec2 point, SDFTerrainShape const* shape)
+{
+	return shape->sampler(point, shape->center, shape->half_size) <= 0.0f;
 }
 
 bool b2PointInCapsule( b2Vec2 point, const b2Capsule* shape )
@@ -577,6 +588,48 @@ b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape
 	output.hit = true;
 
 	return output;
+}
+
+b2CastOutput raycast_sdf_terrain(b2RayCastInput const* input, SDFTerrainShape const* shape)
+{
+	B2_ASSERT( b2IsValidRay( input ) );
+
+	b2CastOutput output = { 0 };
+
+	float const ray_length = b2Length(input->translation);
+	b2Vec2 const ray_direction = b2Normalize(input->translation);
+
+	// Sampling provides the distance to the closest surface.
+	// If the SDF is incorrect, that distance can be less than the actual distance, but not greater, I think.
+
+	float const sample = shape->sampler(input->origin, shape->center, shape->half_size);
+	if (sample <= 0) {
+		output.point = input->origin;
+		output.hit = true;
+		return output;
+	}
+
+	float traveled_length = sample;
+	// I think I have never experienced an infinite loop, but that was before I refactored this function...
+	while (true) {
+		if (input->maxFraction * ray_length < traveled_length)
+			return output;
+		b2Vec2 const p = b2MulAdd(input->origin, traveled_length, ray_direction);
+		float const sample = shape->sampler(p, shape->center, shape->half_size);
+		if (sample >= 0.01f) {
+			traveled_length += sample;
+			continue;
+		}
+		output.fraction = traveled_length / ray_length;
+		output.normal = b2Normalize((b2Vec2){
+			shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size) - shape->sampler((b2Vec2){p.x - 0.01f, p.y}, shape->center, shape->half_size),
+			shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size) - shape->sampler((b2Vec2){p.x, p.y - 0.01f}, shape->center, shape->half_size),
+		});
+		// This negation was needed for my game, or several things would break. I don't know now if it should be here or handled in the game logic...
+		output.point = b2MulAdd(input->origin, traveled_length - 0.0101f, ray_direction);
+		output.hit = true;
+		return output;
+	}
 }
 
 b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* shape )

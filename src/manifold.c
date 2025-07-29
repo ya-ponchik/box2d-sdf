@@ -6,12 +6,177 @@
 
 #include "box2d/collision.h"
 #include "box2d/math_functions.h"
+#include "box2d/types.h"
 
 #include <float.h>
 #include <stddef.h>
+
 #include <stdlib.h>
 
 #define B2_MAKE_ID( A, B ) ( (uint8_t)( A ) << 8 | (uint8_t)( B ) )
+
+// A bigger value improves stability and the body's ability to sleep.
+// A value that is too big worsens the body's ability to sleep?
+#define SDF_DT_C 0.05f
+
+// In case of small objects
+#define SDF_MIN_HALF_CIRCLE_CHECKS 16
+#define SDF_MIN_SEGMENT_CHECKS 1
+
+typedef struct MinimumSignedDistance
+{
+	float distance_1;
+	float distance_2;
+	b2Vec2 position_1;
+	b2Vec2 position_2;
+} MinimumSignedDistance;
+
+static MinimumSignedDistance init_minimum_signed_distance(void)
+{
+	return (MinimumSignedDistance){ 100500.0f, 100500.0f, b2Vec2_zero, b2Vec2_zero };
+}
+
+static void update_minimum_signed_distance(SDFTerrainShape const* terrain, b2Vec2 p, MinimumSignedDistance* min)
+{
+	float const d = terrain->sampler(p, terrain->center, terrain->half_size);
+	if (d < min->distance_1) {
+        min->distance_2 = min->distance_1;
+		min->position_2 = min->position_1;
+        min->distance_1 = d;
+		min->position_1 = p;
+    } else if (d > min->distance_1 && d < min->distance_2) {
+        min->distance_2 = d;
+		min->position_2 = p;
+    }
+}
+
+static b2Manifold construct_manifold_for_sdf(b2ShapeType type, void const* shape, b2Transform xfA, MinimumSignedDistance min)
+{
+	// The shape exterior can represent an incorrect distance field. The space can be dilated.
+	// Even when the SDF is exact, the gradient may not point to the closest surface.
+	// So, we cannot just use the sample to get the distance to the surface and only use the gradient to find the direction to the surface.
+	// So we march around the shape, and if we find a negative SDF, it means we have collided with something.
+	// When the SDF is not exact, the interior usually becomes more inaccurate further from the surface, and space dilation does not affect the solver very much, so we're good!
+	// The only issue is that we cannot detect collisions if the SDF is completely inside our primitive, but I don’t care about that case.
+
+	// We really should have multiple manifolds in the primitive vs SDF scenario, but Box2D is not set up for that. We’re good with one manifold.
+	// We create only two contact points because this greatly increases stability, and I’m not sure if we need more.
+
+	b2Manifold m_1;
+	b2Manifold m_2;
+	b2Manifold m = { 0 };
+
+	// I don't know if this is correct, but I don't know any better.
+	b2Circle const circle = { { 0.0f, 0.0f }, -min.distance_1 };
+	b2Circle const circle2 = { { 0.0f, 0.0f }, -min.distance_2 };
+	b2Transform const tf = { min.position_1, b2Rot_identity };
+	b2Transform const tf2 = { min.position_2, b2Rot_identity };
+	// We represent the SDF as a circle because it is simple and works well enough. I also don't want to construct manifolds by hand.
+	if (type == b2_polygonShape) {
+		m_1 = b2CollidePolygonAndCircle((b2Polygon*)shape, xfA, &circle, tf);
+		m_2 = b2CollidePolygonAndCircle((b2Polygon*)shape, xfA, &circle2, tf2);
+	} else if (type == b2_capsuleShape) {
+		m_1 = b2CollideCapsuleAndCircle((b2Capsule*)shape, xfA, &circle, tf);
+		m_2 = b2CollideCapsuleAndCircle((b2Capsule*)shape, xfA, &circle2, tf2);
+	} else if (type == b2_circleShape) {
+		m_1 = b2CollideCircles(&circle, tf, (b2Circle*)shape, xfA);
+		m_2 = b2CollideCircles(&circle2, tf2, (b2Circle*)shape, xfA);
+	} else {
+		B2_ASSERT( false );
+	}
+
+	if (m_1.pointCount > 0) {
+		// If we do not do this, the resulting manifold will be incorrect.
+		if (type == b2_polygonShape || type == b2_capsuleShape) {
+			// m_1.points[0].separation *= -1;
+			b2Vec2 const a = m_1.points[0].anchorA;
+			b2Vec2 const b = m_1.points[0].anchorB;
+			m_1.points[0].anchorA = b;
+			m_1.points[0].anchorB = a;
+			m_1.normal = b2Neg(m_1.normal);
+		}
+		m.points[m.pointCount] = m_1.points[0];
+		++m.pointCount;
+		m.normal = m_1.normal;
+	}
+	if (m_2.pointCount > 0) {
+		// If we do not do this, the resulting manifold will be incorrect.
+		if (type == b2_polygonShape || type == b2_capsuleShape) {
+			// m_2.points[0].separation *= -1;
+			b2Vec2 const a = m_2.points[0].anchorA;
+			b2Vec2 const b = m_2.points[0].anchorB;
+			m_2.points[0].anchorA = b;
+			m_2.points[0].anchorB = a;
+			m_2.normal = b2Neg(m_2.normal);
+		}
+		m.points[m.pointCount] = m_2.points[0];
+		++m.pointCount;
+		m.normal = m_2.normal;
+	}
+
+	if (m.pointCount == 2)
+		// I don't know if this is correct, but I don't know any better. This enhances stability.
+		m.normal = b2Lerp(m_2.normal, m_1.normal, 0.5f);
+
+	return m;
+}
+
+b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB)
+{
+	B2_UNUSED( xfB );
+	MinimumSignedDistance min = init_minimum_signed_distance();
+	int const sides = b2MaxInt(2 * SDF_MIN_HALF_CIRCLE_CHECKS, 2 * B2_PI * circleA->radius / SDF_DT_C);
+	b2CosSin const increment = b2ComputeCosSin(2 * B2_PI / sides);
+	b2Vec2 rot = { 1, 0 };
+	for (int i = 0; i < sides; ++i) {
+		update_minimum_signed_distance(circleB, b2MulAdd(b2TransformPoint(xfA, circleA->center), circleA->radius, rot), &min);
+		rot = b2RotateVector((b2Rot){ increment.cosine, increment.sine }, rot);
+	}
+	return construct_manifold_for_sdf(b2_circleShape, circleA, xfA, min);
+}
+
+b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB)
+{
+	B2_UNUSED( xfB );
+	MinimumSignedDistance min = init_minimum_signed_distance();
+	for (int i = 0; i < polygonA->count; ++i) {
+		b2Vec2 const current = b2TransformPoint(xfA, polygonA->vertices[i]);
+		b2Vec2 const next = b2TransformPoint(xfA, polygonA->vertices[(i + 1) % polygonA->count]);
+		int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, b2Length(b2Sub(next, current)) / SDF_DT_C);
+		for (int j = 1; j < checks; ++j)
+			// If we include 0 and 1, the polygon will no longer slide and may sometimes explode.
+			update_minimum_signed_distance(circleB, b2MulAdd(current, (float)j / checks, b2Sub(next, current)), &min);
+	}
+	return construct_manifold_for_sdf(b2_polygonShape, polygonA, xfA, min);
+}
+
+b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB)
+{
+	B2_UNUSED( xfB );
+	MinimumSignedDistance min = init_minimum_signed_distance();
+	b2Vec2 const p1 = b2TransformPoint(xfA, capsuleA->center1);
+	b2Vec2 const p2 = b2TransformPoint(xfA, capsuleA->center2);
+	if (b2LengthSquared(b2Sub(p2, p1)) < B2_LINEAR_SLOP)
+		return collide_sdf_terrain_and_circle(&((b2Circle){ capsuleA->center1, capsuleA->radius }), xfA, circleB, xfB);
+	int const sides = b2MaxInt(SDF_MIN_HALF_CIRCLE_CHECKS, B2_PI * capsuleA->radius / SDF_DT_C);
+	// check: dt_rad = dt_C / r
+	b2CosSin const increment = b2ComputeCosSin(B2_PI / sides);
+	b2Vec2 const axis = b2Normalize(b2Sub(p2, p1));
+	b2Vec2 rot = { -axis.y, axis.x };
+	b2Vec2 const p1_right = b2MulAdd(p1, capsuleA->radius, rot);
+	b2Vec2 const p1_left = b2MulAdd(p1, -capsuleA->radius, rot);
+	for (int i = 0; i <= sides; ++i) {
+		update_minimum_signed_distance(circleB, b2MulAdd(p1, capsuleA->radius, rot), &min);
+		update_minimum_signed_distance(circleB, b2MulAdd(p2, -capsuleA->radius, rot), &min);
+		rot = b2RotateVector((b2Rot){ increment.cosine, increment.sine }, rot);
+	}
+	int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, b2Length(b2Sub(p2, p1)) / SDF_DT_C); 
+	for (int j = 1; j < checks; ++j) {
+		update_minimum_signed_distance(circleB, b2MulAdd(p1_left, (float)j / checks, b2Sub(p2, p1)), &min);
+		update_minimum_signed_distance(circleB, b2MulAdd(p1_right, (float)j / checks, b2Sub(p2, p1)), &min);
+	}
+	return construct_manifold_for_sdf(b2_capsuleShape, capsuleA, xfA, min);
+}
 
 static b2Polygon b2MakeCapsule( b2Vec2 p1, b2Vec2 p2, float radius )
 {

@@ -5,6 +5,8 @@
 
 #include "box2d/types.h"
 
+#include <glad/glad.h>
+
 struct ImFont;
 
 struct Camera
@@ -21,6 +23,20 @@ struct Camera
 	float m_zoom;
 	int m_width;
 	int m_height;
+};
+
+class SDFTerrain {
+public:
+	void create();
+	void destroy();
+	void draw(Camera const&, struct GLFWwindow&) const;
+private:
+	GLuint m_vao_id;
+	GLuint m_vbo_id;
+	GLuint m_program_id;
+	GLint m_zoom_uniform;
+	GLint m_center_uniform;
+	GLint m_time_uniform;
 };
 
 // This class implements Box2D debug drawing callbacks
@@ -59,6 +75,7 @@ public:
 	Camera* m_camera;
 	bool m_showUI;
 	struct GLBackground* m_background;
+	SDFTerrain m_sdf_terrain;
 	struct GLPoints* m_points;
 	struct GLLines* m_lines;
 	struct GLCircles* m_circles;

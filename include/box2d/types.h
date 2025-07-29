@@ -309,6 +309,8 @@ typedef enum b2ShapeType
 	/// A circle with an offset
 	b2_circleShape,
 
+	sdf_terrain_shape,
+
 	/// A capsule is an extruded circle
 	b2_capsuleShape,
 
