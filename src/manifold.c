@@ -62,8 +62,8 @@ static b2Manifold construct_manifold_for_sdf(b2ShapeType type, void const* shape
 	// We really should have multiple manifolds in the primitive vs SDF scenario, but Box2D is not set up for that. We’re good with one manifold.
 	// We create only two contact points because this greatly increases stability, and I’m not sure if we need more.
 
-	b2Manifold m_1;
-	b2Manifold m_2;
+	b2Manifold m_1 = { 0 };
+	b2Manifold m_2 = { 0 };
 	b2Manifold m = { 0 };
 
 	// I don't know if this is correct, but I don't know any better.
