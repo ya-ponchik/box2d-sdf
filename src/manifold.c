@@ -36,8 +36,15 @@ static MinimumSignedDistance init_minimum_signed_distance(void)
 	return (MinimumSignedDistance){ 100500.0f, 100500.0f, b2Vec2_zero, b2Vec2_zero };
 }
 
-static void update_minimum_signed_distance(SDFTerrainShape const* terrain, b2Vec2 p, MinimumSignedDistance* min)
+static void update_minimum_signed_distance(SDFTerrainShape const* terrain, b2Vec2 p, MinimumSignedDistance* min, int aabb_check)
 {
+	float const left = terrain->center.x - terrain->half_size.x;
+	float const right = terrain->center.x + terrain->half_size.x;
+	float const top = terrain->center.y - terrain->half_size.y;
+	float const bottom = terrain->center.y + terrain->half_size.y;
+	// This increases stability when multiple SDF shapes use a single sampler function and someone collides with both shapes.
+	if (aabb_check == 1 && !(p.x >= left && p.x <= right && p.y >= top && p.y <= bottom))
+		return;
 	float const d = terrain->sampler(p, terrain->center, terrain->half_size);
 	if (d < min->distance_1) {
         min->distance_2 = min->distance_1;
@@ -121,7 +128,7 @@ static b2Manifold construct_manifold_for_sdf(b2ShapeType type, void const* shape
 	return m;
 }
 
-b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB)
+b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check)
 {
 	B2_UNUSED( xfB );
 	MinimumSignedDistance min = init_minimum_signed_distance();
@@ -129,13 +136,13 @@ b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform x
 	b2CosSin const increment = b2ComputeCosSin(2 * B2_PI / sides);
 	b2Vec2 rot = { 1, 0 };
 	for (int i = 0; i < sides; ++i) {
-		update_minimum_signed_distance(circleB, b2MulAdd(b2TransformPoint(xfA, circleA->center), circleA->radius, rot), &min);
+		update_minimum_signed_distance(circleB, b2MulAdd(b2TransformPoint(xfA, circleA->center), circleA->radius, rot), &min, aabb_check);
 		rot = b2RotateVector((b2Rot){ increment.cosine, increment.sine }, rot);
 	}
 	return construct_manifold_for_sdf(b2_circleShape, circleA, xfA, min);
 }
 
-b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB)
+b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check)
 {
 	B2_UNUSED( xfB );
 	MinimumSignedDistance min = init_minimum_signed_distance();
@@ -145,19 +152,19 @@ b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transfor
 		int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, (int)(b2Length(b2Sub(next, current)) / SDF_DT_C));
 		for (int j = 1; j < checks; ++j)
 			// If we include 0 and 1, the polygon will no longer slide and may sometimes explode.
-			update_minimum_signed_distance(circleB, b2MulAdd(current, (float)j / checks, b2Sub(next, current)), &min);
+			update_minimum_signed_distance(circleB, b2MulAdd(current, (float)j / checks, b2Sub(next, current)), &min, aabb_check);
 	}
 	return construct_manifold_for_sdf(b2_polygonShape, polygonA, xfA, min);
 }
 
-b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB)
+b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check)
 {
 	B2_UNUSED( xfB );
 	MinimumSignedDistance min = init_minimum_signed_distance();
 	b2Vec2 const p1 = b2TransformPoint(xfA, capsuleA->center1);
 	b2Vec2 const p2 = b2TransformPoint(xfA, capsuleA->center2);
 	if (b2LengthSquared(b2Sub(p2, p1)) < B2_LINEAR_SLOP)
-		return collide_sdf_terrain_and_circle(&((b2Circle){ capsuleA->center1, capsuleA->radius }), xfA, circleB, xfB);
+		return collide_sdf_terrain_and_circle(&((b2Circle){ capsuleA->center1, capsuleA->radius }), xfA, circleB, xfB, aabb_check);
 	int const sides = b2MaxInt(SDF_MIN_HALF_CIRCLE_CHECKS, (int)(B2_PI * capsuleA->radius / SDF_DT_C));
 	// check: dt_rad = dt_C / r
 	b2CosSin const increment = b2ComputeCosSin(B2_PI / sides);
@@ -166,14 +173,14 @@ b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transfor
 	b2Vec2 const p1_right = b2MulAdd(p1, capsuleA->radius, rot);
 	b2Vec2 const p1_left = b2MulAdd(p1, -capsuleA->radius, rot);
 	for (int i = 0; i <= sides; ++i) {
-		update_minimum_signed_distance(circleB, b2MulAdd(p1, capsuleA->radius, rot), &min);
-		update_minimum_signed_distance(circleB, b2MulAdd(p2, -capsuleA->radius, rot), &min);
+		update_minimum_signed_distance(circleB, b2MulAdd(p1, capsuleA->radius, rot), &min, aabb_check);
+		update_minimum_signed_distance(circleB, b2MulAdd(p2, -capsuleA->radius, rot), &min, aabb_check);
 		rot = b2RotateVector((b2Rot){ increment.cosine, increment.sine }, rot);
 	}
 	int const checks = b2MaxInt(SDF_MIN_SEGMENT_CHECKS + 1, (int)(b2Length(b2Sub(p2, p1)) / SDF_DT_C)); 
 	for (int j = 1; j < checks; ++j) {
-		update_minimum_signed_distance(circleB, b2MulAdd(p1_left, (float)j / checks, b2Sub(p2, p1)), &min);
-		update_minimum_signed_distance(circleB, b2MulAdd(p1_right, (float)j / checks, b2Sub(p2, p1)), &min);
+		update_minimum_signed_distance(circleB, b2MulAdd(p1_left, (float)j / checks, b2Sub(p2, p1)), &min, aabb_check);
+		update_minimum_signed_distance(circleB, b2MulAdd(p1_right, (float)j / checks, b2Sub(p2, p1)), &min, aabb_check);
 	}
 	return construct_manifold_for_sdf(b2_capsuleShape, capsuleA, xfA, min);
 }

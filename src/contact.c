@@ -76,19 +76,19 @@ static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2Transform xfA, cons
 static b2Manifold sdf_terrain_and_circle_manifold(b2Shape const* shapeA, b2Transform xfA, b2Shape const* shapeB, b2Transform xfB, b2SimplexCache* cache)
 {
 	B2_UNUSED( cache );
-	return collide_sdf_terrain_and_circle(&shapeB->circle, xfB, &shapeA->sdf_terrain, xfA);
+	return collide_sdf_terrain_and_circle(&shapeB->circle, xfB, &shapeA->sdf_terrain, xfA, 1);
 }
 
 static b2Manifold sdf_terrain_and_capsule_manifold(b2Shape const* shapeA, b2Transform xfA, b2Shape const* shapeB, b2Transform xfB, b2SimplexCache* cache)
 {
 	B2_UNUSED( cache );
-	return collide_sdf_terrain_and_capsule(&shapeB->capsule, xfB, &shapeA->sdf_terrain, xfA);
+	return collide_sdf_terrain_and_capsule(&shapeB->capsule, xfB, &shapeA->sdf_terrain, xfA, 1);
 }
 
 static b2Manifold sdf_terrain_and_polygon_manifold(b2Shape const* shapeA, b2Transform xfA, b2Shape const* shapeB, b2Transform xfB, b2SimplexCache* cache)
 {
 	B2_UNUSED( cache );
-	return collide_sdf_terrain_and_polygon(&shapeB->polygon, xfB, &shapeA->sdf_terrain, xfA);
+	return collide_sdf_terrain_and_polygon(&shapeB->polygon, xfB, &shapeA->sdf_terrain, xfA, 1);
 }
 
 static b2Manifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
