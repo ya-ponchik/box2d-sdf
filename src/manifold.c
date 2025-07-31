@@ -131,12 +131,16 @@ static b2Manifold construct_manifold_for_sdf(b2ShapeType type, void const* shape
 b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check)
 {
 	B2_UNUSED( xfB );
+	b2Vec2 const center = b2TransformPoint(xfA, circleA->center);
+	// Optimization. That 0.01f margin is important.
+	if (circleB->sampler(center, circleB->center, circleB->half_size) >= circleA->radius + 0.01f)
+		return (b2Manifold){ 0 };
 	MinimumSignedDistance min = init_minimum_signed_distance();
 	int const sides = b2MaxInt(2 * SDF_MIN_HALF_CIRCLE_CHECKS, (int)(2 * B2_PI * circleA->radius / SDF_DT_C));
 	b2CosSin const increment = b2ComputeCosSin(2 * B2_PI / sides);
 	b2Vec2 rot = { 1, 0 };
 	for (int i = 0; i < sides; ++i) {
-		update_minimum_signed_distance(circleB, b2MulAdd(b2TransformPoint(xfA, circleA->center), circleA->radius, rot), &min, aabb_check);
+		update_minimum_signed_distance(circleB, b2MulAdd(center, circleA->radius, rot), &min, aabb_check);
 		rot = b2RotateVector((b2Rot){ increment.cosine, increment.sine }, rot);
 	}
 	return construct_manifold_for_sdf(b2_circleShape, circleA, xfA, min);
