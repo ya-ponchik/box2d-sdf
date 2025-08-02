@@ -234,6 +234,7 @@ void SDFTerrain::create()
 
 	m_zoom_uniform = glGetUniformLocation(m_program_id, "pixel_to_meter_ratio");
 	m_center_uniform = glGetUniformLocation(m_program_id, "center");
+	m_mode_uniform = glGetUniformLocation(m_program_id, "test_mode");
 	m_time_uniform = glGetUniformLocation(m_program_id, "test_time");
 
 	constexpr auto vertex_attribute = 0;
@@ -271,7 +272,7 @@ void SDFTerrain::destroy()
 	}
 }
 
-void SDFTerrain::draw(Camera const& camera, struct GLFWwindow& window) const
+void SDFTerrain::draw(Camera const& camera, struct GLFWwindow& window, int mode) const
 {
 	glUseProgram(m_program_id);
 
@@ -286,6 +287,7 @@ void SDFTerrain::draw(Camera const& camera, struct GLFWwindow& window) const
 		0.0f - camera.m_center.x + camera.m_width * 0.5f * pixel_to_meter_ratio * scale,
 		0.0f - camera.m_center.y + camera.m_height * 0.5f * pixel_to_meter_ratio * scale
 	);
+	glUniform1i(m_mode_uniform, mode);
 	glUniform1f(m_time_uniform, static_cast<float>(glfwGetTime()));
 
 	glBindVertexArray(m_vao_id);

@@ -16,6 +16,15 @@ float mod(float x, float y)
     return x - y * floor;
 }
 
+// https://registry.khronos.org/OpenGL-Refpages/gl4/html/fract.xhtml
+// https://stackoverflow.com/questions/5122993/floor-int-function-implementaton/26091248#26091248
+float fract(float x)
+{
+    int xi = int(x);
+    float floor = x < xi ? xi - 1 : xi;
+    return x - floor;
+}
+
 float calc_sin(float x) { return b2ComputeCosSin(x).sine; }
 float calc_cos(float x) { return b2ComputeCosSin(x).cosine; }
 #else
@@ -81,6 +90,26 @@ float sdArc( b2Vec2 p, b2Vec2 sc, float ra, float rb )
                                   b2AbsFloat(b2Length(p)-ra)) - rb;
 }
 
+b2Vec2 rot(b2Vec2 p, float a)
+{
+#ifdef INSIDE_CPP
+    return b2RotateVector(b2MakeRot(a), p);
+#else
+    float c = cos(a);
+    float s = sin(a);
+    return mat2(c, s, -s, c) * p;
+#endif
+}
+
+float circleGrid(b2Vec2 p, float a, float s, float s2)
+{
+    b2Vec2 rp = rot(p, a);
+    b2Vec2 tmp_1 = s2 * rp;
+    b2Vec2 tmp_2 = b2Vec2(fract(tmp_1.x), fract(tmp_1.y));
+    float cg = b2Length(tmp_2-b2Vec2(0.5f, 0.5f))-(b2MinFloat(-p.y*0.3f, s));
+    return b2MaxFloat(cg, p.y);
+}
+
 // Union produces correct exterior but incorrect interior
 // Subtract produces incorrect exterior but correct interior
 // Smoothing dilates space
@@ -143,6 +172,22 @@ float sdf_sample_6(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
     return sdArc(p, b2Vec2(calc_sin(tb), calc_cos(tb)), arc_radius, outline_radius);
 }
 
+// An infinite (if you enable it below) procedural level
+// The code taken from https://obelex.itch.io/put-them-back
+float sdf_sample_7(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+{
+    const float scale = 0.1f;
+    const bool is_infinite = false;
+
+    p *= scale;
+
+    float d = opSmoothSubtraction(-opSmoothUnion(circleGrid(b2Vec2(p.x * 0.6f, p.y), 1.0f, 0.3f, 0.3f), circleGrid(p, 1.4f, 0.18f, 0.2f), 0.2f), -circleGrid(b2Vec2(p.x * 0.5f, p.y * 0.8f), 2.0f, 0.3f, 0.5f), 0.2f);
+    if (!is_infinite)
+        d = opSmoothUnion(opSmoothUnion(opSmoothSubtraction(-p.y, -(b2AbsFloat(p.x) - 1.0f + p.y * 0.2f), 0.5f), d, 0.5f), p.y + 100.0f, 0.5f);
+
+    return d / scale;
+}
+
 const b2Vec2 sample_2_center = b2Vec2(0.0f, 15.0f);
 const b2Vec2 sample_3_center = b2Vec2(20.0f, 20.0f);
 const b2Vec2 sample_5_center = b2Vec2(0.0f, 70.0f);
@@ -154,6 +199,10 @@ const b2Vec2 sample_3_half_size = b2Vec2(6.0f, 6.0f);
 float calc_sdf(b2Vec2 p)
 {
     const b2Vec2 none = b2Vec2(0.0f, 0.0f);
+
+    if (test_mode == 1)
+        return sdf_sample_7(p, none, none);
+
     // NOTE: Samples influence each other visually, but not physically.
     float d = sdf_sample_1(p, none, none);
     d = b2MinFloat(d, sdf_sample_2(p, sample_2_center, sample_2_half_size));

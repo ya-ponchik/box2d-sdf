@@ -29,7 +29,7 @@ class SDFTerrain {
 public:
 	void create();
 	void destroy();
-	void draw(Camera const&, struct GLFWwindow&) const;
+	void draw(Camera const&, struct GLFWwindow&, int mode) const;
 private:
 	GLuint m_vao_id;
 	GLuint m_vbo_id;
@@ -37,6 +37,7 @@ private:
 	GLint m_zoom_uniform;
 	GLint m_center_uniform;
 	GLint m_time_uniform;
+	GLint m_mode_uniform;
 };
 
 // This class implements Box2D debug drawing callbacks

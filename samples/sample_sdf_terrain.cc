@@ -15,6 +15,7 @@
 #define INSIDE_CPP
 
 static float test_time = 0;
+static int test_mode = 0;
 
 #include "SDF.h"
 
@@ -25,6 +26,8 @@ static void spawn_sdf(b2WorldId world)
 	b2BodyId const body = b2CreateBody(world, &body_def);
 	b2ShapeDef const shape_def = b2DefaultShapeDef();
 	SDFTerrainShape shape;
+
+	if (test_mode == 0) {
 	
 	shape = { sdf_sample_1, { 1.2f, -22.0f },  { 25.0f, 25.0f } };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
@@ -49,6 +52,11 @@ static void spawn_sdf(b2WorldId world)
 
 	shape = { sdf_sample_6, sample_6_center, { 5.0f, 5.0f } };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
+
+	} else if (test_mode == 1) {
+		shape = { sdf_sample_7, { 0.0f, -500.0f }, { 250.0f, 550.0f } };
+		create_sdf_terrain_shape(body, &shape_def, &shape);
+	}
 }
 
 static void update_sdf()
@@ -269,6 +277,8 @@ public:
 			m_context->camera.m_zoom = 25.0f * 0.75f;
 		}
 
+		test_mode = 0;
+		
 		spawn_sdf(m_worldId);
 
 		// Ground body
@@ -777,6 +787,8 @@ private:
 		m_camera->m_center = { 8.0f, 30.0f };
 		m_camera->m_zoom = 60.0f;
 
+		test_mode = 0;
+
 		spawn_sdf(m_worldId);
 
 		m_car.Spawn(m_worldId, { 43.0f, 56.5f }, 3.0f, 5.0f, 0.7f, 85.0f, nullptr);
@@ -864,6 +876,37 @@ private:
 
 
 
+class SDFProcedural : public Sample {
+public:
+	static Sample* create(SampleContext* context)
+	{
+		return new SDFProcedural(*context);
+	}
+private:
+	explicit SDFProcedural(SampleContext& context)
+		: Sample(&context)
+	{
+		m_camera->m_center = { 8.0f, -12.0f };
+		m_camera->m_zoom = 60.0f;
+
+		test_mode = 1;
+
+		spawn_sdf(m_worldId);
+		
+		b2BodyDef body_def = b2DefaultBodyDef();
+		body_def.type = b2_dynamicBody;
+		body_def.position = { -10.0f, 20.0f };
+		b2ShapeDef shape_def = b2DefaultShapeDef();
+		shape_def.material.rollingResistance = 0.15f;
+		b2Circle const c { {}, 5.0f };
+		b2CreateCircleShape(b2CreateBody(m_worldId, &body_def), &shape_def, &c);
+	}
+};
+
+
+
+
+
 
 
 
@@ -875,3 +918,4 @@ private:
 
 static int sample_1 = RegisterSample("SDF Terrain", "SDF Ray Cast World", SDFCastWorld::Create);
 static int sample_2 = RegisterSample("SDF Terrain", "SDF Collision", SDFCollision::create);
+static int sample_3 = RegisterSample("SDF Terrain", "SDF Procedural", SDFProcedural::create);

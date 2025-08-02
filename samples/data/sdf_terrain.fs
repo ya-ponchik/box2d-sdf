@@ -5,6 +5,7 @@ out vec4 FragColor;
 uniform float pixel_to_meter_ratio;
 uniform vec2 center;
 uniform float test_time;
+uniform int test_mode;
 
 // THIS COMMENT WILL BE REPLACED BY CODE AT RUNTIME
 

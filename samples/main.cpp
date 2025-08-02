@@ -669,8 +669,9 @@ int main( int, char** )
 
 		// s_context.draw.DrawBackground();
 		auto const sample_category_name = std::string_view(g_sampleEntries[s_context.sampleIndex].category);
+		auto const sample_name = std::string_view(g_sampleEntries[s_context.sampleIndex].name);
 		if (sample_category_name.starts_with("SDF"))
-			s_context.draw.m_sdf_terrain.draw(*(s_context.draw.m_camera), *(s_context.window));
+			s_context.draw.m_sdf_terrain.draw(*(s_context.draw.m_camera), *(s_context.window), sample_name.starts_with("SDF Procedural") ? 1 : 0);
 
 		double cursorPosX = 0, cursorPosY = 0;
 		glfwGetCursorPos( s_context.window, &cursorPosX, &cursorPosY );
