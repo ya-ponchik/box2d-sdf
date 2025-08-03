@@ -107,7 +107,9 @@ float circleGrid(b2Vec2 p, float a, float s, float s2)
     b2Vec2 tmp_1 = s2 * rp;
     b2Vec2 tmp_2 = b2Vec2(fract(tmp_1.x), fract(tmp_1.y));
     float cg = b2Length(tmp_2-b2Vec2(0.5f, 0.5f))-(b2MinFloat(-p.y*0.3f, s));
-    return b2MaxFloat(cg, p.y);
+    float d = b2MaxFloat(cg, p.y);
+    // Less space dilation that way.
+    return d / s2;
 }
 
 // Union produces correct exterior but incorrect interior
