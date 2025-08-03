@@ -625,8 +625,7 @@ b2CastOutput raycast_sdf_terrain(b2RayCastInput const* input, SDFTerrainShape co
 			shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size) - shape->sampler((b2Vec2){p.x - 0.01f, p.y}, shape->center, shape->half_size),
 			shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size) - shape->sampler((b2Vec2){p.x, p.y - 0.01f}, shape->center, shape->half_size),
 		});
-		// This negation was needed for my game, or several things would break. I don't know now if it should be here or handled in the game logic...
-		output.point = b2MulAdd(input->origin, traveled_length - 0.0101f, ray_direction);
+		output.point = p;
 		output.hit = true;
 		return output;
 	}
