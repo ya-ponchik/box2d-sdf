@@ -6,3 +6,5 @@ This is an experiment in integrating SDF (signed distance field) into Box2D 3.1.
 ![Box](box.gif)
 ![123](123.gif)
 ![Procedural](procedural.gif)
+# TODO
+- v3 uses speculative collision, so the separation can be up to b2_speculativeDistance
