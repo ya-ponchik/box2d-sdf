@@ -8,4 +8,3 @@ This is an experiment in integrating SDF (signed distance field) into Box2D 3.1.
 ![Procedural](procedural.gif)
 # TODO
 - v3 uses speculative collision, so the separation can be up to b2_speculativeDistance
-- Test with circle collider: 1) Get the normal at the circle's center 2) Add to the circle's center the normal vector multiplied by the circle's radius 3) Sample the SDF at the obtained position 4) Compare with zero

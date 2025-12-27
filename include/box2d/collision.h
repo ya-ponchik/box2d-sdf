@@ -108,6 +108,9 @@ typedef struct b2Circle
 
 	/// The radius
 	float radius;
+
+	/// Simple math instead of brute force is cooler and funnier, but it's much less stable. It can be OK for small circles.
+	bool simple_sdf_collision;
 } b2Circle;
 
 typedef float sdf_sampler(b2Vec2 position, b2Vec2 center, b2Vec2 half_size);
@@ -574,6 +577,10 @@ B2_API b2Manifold b2CollideCircles( const b2Circle* circleA, b2Transform xfA, co
 
 /// Compute the contact manifold between an SDF terrain and a circle
 B2_API b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check);
+
+/// Compute the contact manifold between an SDF terrain and a circle
+/// See b2Circle.simple_sdf_collision for more info
+B2_API b2Manifold collide_sdf_terrain_and_circle_simple(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB);
 
 /// Compute the contact manifold between a capsule and circle
 B2_API b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2Transform xfA, const b2Circle* circleB,

@@ -146,6 +146,18 @@ b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform x
 	return construct_manifold_for_sdf(b2_circleShape, circleA, xfA, min);
 }
 
+b2Manifold collide_sdf_terrain_and_circle_simple(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB)
+{
+	b2Vec2 const c = b2TransformPoint(xfA, circleA->center);
+	b2Vec2 const n = b2Normalize((b2Vec2){
+		circleB->sampler((b2Vec2){c.x + 0.01f, c.y}, circleB->center, circleB->half_size) - circleB->sampler((b2Vec2){c.x - 0.01f, c.y}, circleB->center, circleB->half_size),
+		circleB->sampler((b2Vec2){c.x, c.y + 0.01f}, circleB->center, circleB->half_size) - circleB->sampler((b2Vec2){c.x, c.y - 0.01f}, circleB->center, circleB->half_size),
+	});
+	b2Vec2 const p = b2MulAdd(c, -circleA->radius, n);
+	float const d = circleB->sampler(p, circleB->center, circleB->half_size);
+	return b2CollideCircles(&(b2Circle){ b2Vec2_zero, -d }, (b2Transform){ p, b2Rot_identity }, circleA, xfA);
+}
+
 b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check)
 {
 	B2_UNUSED( xfB );

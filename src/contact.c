@@ -76,6 +76,8 @@ static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2Transform xfA, cons
 static b2Manifold sdf_terrain_and_circle_manifold(b2Shape const* shapeA, b2Transform xfA, b2Shape const* shapeB, b2Transform xfB, b2SimplexCache* cache)
 {
 	B2_UNUSED( cache );
+	if (shapeB->circle.simple_sdf_collision)
+		return collide_sdf_terrain_and_circle_simple(&shapeB->circle, xfB, &shapeA->sdf_terrain);
 	return collide_sdf_terrain_and_circle(&shapeB->circle, xfB, &shapeA->sdf_terrain, xfA, 1);
 }
 

@@ -806,7 +806,8 @@ private:
 		
 		for (int i = 0; i < 5; ++i) {
 			body_def.position = { -10.0f, 20.0f };
-			b2Circle const c { {}, i == 0 ? 5.0f : 1.0f };
+			bool const is_simple = false;
+			b2Circle const c { {}, i == 0 ? 5.0f : 1.0f, is_simple };
 			b2CreateCircleShape(b2CreateBody(m_worldId, &body_def), &shape_def, &c);
 		}
 
