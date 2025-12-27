@@ -210,7 +210,7 @@ b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 	float lengthSqr = b2DistanceSquared( capsule->center1, capsule->center2 );
 	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
 	{
-		b2Circle circle = { b2Lerp( capsule->center1, capsule->center2, 0.5f ), capsule->radius };
+		b2Circle circle = { b2Lerp( capsule->center1, capsule->center2, 0.5f ), capsule->radius, false };
 		return b2CreateShape( bodyId, def, &circle, b2_circleShape );
 	}
 

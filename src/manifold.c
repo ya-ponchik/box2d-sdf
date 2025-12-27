@@ -74,8 +74,8 @@ static b2Manifold construct_manifold_for_sdf(b2ShapeType type, void const* shape
 	b2Manifold m = { 0 };
 
 	// I don't know if this is correct, but I don't know any better.
-	b2Circle const circle = { { 0.0f, 0.0f }, -min.distance_1 };
-	b2Circle const circle2 = { { 0.0f, 0.0f }, -min.distance_2 };
+	b2Circle const circle = { { 0.0f, 0.0f }, -min.distance_1, false };
+	b2Circle const circle2 = { { 0.0f, 0.0f }, -min.distance_2, false };
 	b2Transform const tf = { min.position_1, b2Rot_identity };
 	b2Transform const tf2 = { min.position_2, b2Rot_identity };
 	// We represent the SDF as a circle because it is simple and works well enough. I also don't want to construct manifolds by hand.
@@ -155,7 +155,7 @@ b2Manifold collide_sdf_terrain_and_circle_simple(b2Circle const* circleA, b2Tran
 	});
 	b2Vec2 const p = b2MulAdd(c, -circleA->radius, n);
 	float const d = circleB->sampler(p, circleB->center, circleB->half_size);
-	return b2CollideCircles(&(b2Circle){ b2Vec2_zero, -d }, (b2Transform){ p, b2Rot_identity }, circleA, xfA);
+	return b2CollideCircles(&(b2Circle){ b2Vec2_zero, -d, false }, (b2Transform){ p, b2Rot_identity }, circleA, xfA);
 }
 
 b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check)
@@ -180,7 +180,7 @@ b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transfor
 	b2Vec2 const p1 = b2TransformPoint(xfA, capsuleA->center1);
 	b2Vec2 const p2 = b2TransformPoint(xfA, capsuleA->center2);
 	if (b2LengthSquared(b2Sub(p2, p1)) < B2_LINEAR_SLOP)
-		return collide_sdf_terrain_and_circle(&((b2Circle){ capsuleA->center1, capsuleA->radius }), xfA, circleB, xfB, aabb_check);
+		return collide_sdf_terrain_and_circle(&((b2Circle){ capsuleA->center1, capsuleA->radius, false }), xfA, circleB, xfB, aabb_check);
 	int const sides = b2MaxInt(SDF_MIN_HALF_CIRCLE_CHECKS, (int)(B2_PI * capsuleA->radius / SDF_DT_C));
 	// check: dt_rad = dt_C / r
 	b2CosSin const increment = b2ComputeCosSin(B2_PI / sides);

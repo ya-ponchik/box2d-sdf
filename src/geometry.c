@@ -648,7 +648,7 @@ b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* sha
 	if ( capsuleLength < FLT_EPSILON )
 	{
 		// Capsule is really a circle
-		b2Circle circle = { v1, shape->radius };
+		b2Circle circle = { v1, shape->radius, false };
 		return b2RayCastCircle( input, &circle );
 	}
 
@@ -670,14 +670,14 @@ b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* sha
 		if ( qa < 0.0f )
 		{
 			// start point behind capsule segment
-			b2Circle circle = { v1, shape->radius };
+			b2Circle circle = { v1, shape->radius, false };
 			return b2RayCastCircle( input, &circle );
 		}
 
 		if ( qa > capsuleLength )
 		{
 			// start point ahead of capsule segment
-			b2Circle circle = { v2, shape->radius };
+			b2Circle circle = { v2, shape->radius, false };
 			return b2RayCastCircle( input, &circle );
 		}
 
@@ -746,13 +746,13 @@ b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* sha
 	if ( s1 < 0.0f )
 	{
 		// ray passes behind capsule segment
-		b2Circle circle = { v1, shape->radius };
+		b2Circle circle = { v1, shape->radius, false };
 		return b2RayCastCircle( input, &circle );
 	}
 	else if ( capsuleLength < s1 )
 	{
 		// ray passes ahead of capsule segment
-		b2Circle circle = { v2, shape->radius };
+		b2Circle circle = { v2, shape->radius, false };
 		return b2RayCastCircle( input, &circle );
 	}
 	else
