@@ -8,3 +8,5 @@ This is an experiment in integrating SDF (signed distance field) into Box2D 3.1.
 ![Procedural](procedural.gif)
 # TODO
 - v3 uses speculative collision, so the separation can be up to b2_speculativeDistance
+- Shape cast of circle (circle cast) vs. exact SDF is simply a raycast with `d - radius`.
+
