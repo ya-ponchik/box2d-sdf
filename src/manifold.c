@@ -38,10 +38,13 @@ static MinimumSignedDistance init_minimum_signed_distance(void)
 
 static void update_minimum_signed_distance(SDFTerrainShape const* terrain, b2Vec2 p, MinimumSignedDistance* min, int aabb_check)
 {
-	float const left = terrain->center.x - terrain->half_size.x;
-	float const right = terrain->center.x + terrain->half_size.x;
-	float const top = terrain->center.y - terrain->half_size.y;
-	float const bottom = terrain->center.y + terrain->half_size.y;
+	// v3 uses speculative collision, so the separation can be up to b2_speculativeDistance.
+	// See b2CollideCircles, b2CollideCapsuleAndCircle and b2CollidePolygonAndCircle.
+	float const speculative_distance = B2_SPECULATIVE_DISTANCE;
+	float const left = terrain->center.x - terrain->half_size.x - speculative_distance;
+	float const right = terrain->center.x + terrain->half_size.x + speculative_distance;
+	float const top = terrain->center.y - terrain->half_size.y - speculative_distance;
+	float const bottom = terrain->center.y + terrain->half_size.y + speculative_distance;
 	// This increases stability when multiple SDF shapes use a single sampler function and someone collides with both shapes.
 	if (aabb_check == 1 && !(p.x >= left && p.x <= right && p.y >= top && p.y <= bottom))
 		return;
@@ -132,8 +135,8 @@ b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform x
 {
 	B2_UNUSED( xfB );
 	b2Vec2 const center = b2TransformPoint(xfA, circleA->center);
-	// Optimization. That 0.01f margin is important.
-	if (circleB->sampler(center, circleB->center, circleB->half_size) >= circleA->radius + 0.01f)
+	// Optimization. That at least 0.01f margin is important.
+	if (circleB->sampler(center, circleB->center, circleB->half_size) >= circleA->radius + B2_SPECULATIVE_DISTANCE)
 		return (b2Manifold){ 0 };
 	MinimumSignedDistance min = init_minimum_signed_distance();
 	int const sides = b2MaxInt(2 * SDF_MIN_HALF_CIRCLE_CHECKS, (int)(2 * B2_PI * circleA->radius / SDF_DT_C));
