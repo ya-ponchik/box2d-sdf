@@ -6,6 +6,8 @@ This is an experiment in integrating SDF (signed distance field) into Box2D 3.1.
 ![Box](box.gif)
 ![123](123.gif)
 ![Procedural](procedural.gif)
+# Bonus
+The SDF.h file contains functions I use in my game. It requires the GLM library and at least C++20
 # TODO
 - Shape cast of circle (circle cast) vs. exact SDF is simply a raycast with `d - radius`.
 - Making the gradient computation a user-defined callback can be useful https://iquilezles.org/articles/distgradfunctions2d/. Also bounding boxes https://iquilezles.org/articles/bboxes2d/
