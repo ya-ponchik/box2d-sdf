@@ -17,7 +17,7 @@
 
 // A bigger value improves stability and the body's ability to sleep.
 // A value that is too big worsens the body's ability to sleep?
-#define SDF_DT_C 0.05f
+#define SDF_DT_C 0.1f
 
 // In case of small objects
 #define SDF_MIN_HALF_CIRCLE_CHECKS 16
@@ -152,9 +152,13 @@ b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform x
 b2Manifold collide_sdf_terrain_and_circle_simple(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB)
 {
 	b2Vec2 const c = b2TransformPoint(xfA, circleA->center);
+	float const dc = circleB->sampler(c, circleB->center, circleB->half_size, circleB->user_data);
+	// Optimization. That at least 0.01f margin is important.
+	if (dc >= circleA->radius + B2_SPECULATIVE_DISTANCE)
+		return (b2Manifold){ 0 };
 	b2Vec2 const n = b2Normalize((b2Vec2){
-		circleB->sampler((b2Vec2){c.x + 0.01f, c.y}, circleB->center, circleB->half_size, circleB->user_data) - circleB->sampler((b2Vec2){c.x - 0.01f, c.y}, circleB->center, circleB->half_size, circleB->user_data),
-		circleB->sampler((b2Vec2){c.x, c.y + 0.01f}, circleB->center, circleB->half_size, circleB->user_data) - circleB->sampler((b2Vec2){c.x, c.y - 0.01f}, circleB->center, circleB->half_size, circleB->user_data),
+		circleB->sampler((b2Vec2){c.x + 0.01f, c.y}, circleB->center, circleB->half_size, circleB->user_data) - dc,
+		circleB->sampler((b2Vec2){c.x, c.y + 0.01f}, circleB->center, circleB->half_size, circleB->user_data) - dc
 	});
 	b2Vec2 const p = b2MulAdd(c, -circleA->radius, n);
 	float const d = circleB->sampler(p, circleB->center, circleB->half_size, circleB->user_data);
