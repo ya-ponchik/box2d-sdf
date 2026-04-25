@@ -1384,6 +1384,14 @@ b2Circle b2Shape_GetCircle( b2ShapeId shapeId )
 	return shape->circle;
 }
 
+SDFTerrainShape b2Shape_GetSDFTerrain( b2ShapeId shapeId )
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	b2Shape* shape = b2GetShape( world, shapeId );
+	B2_ASSERT( shape->type == sdf_terrain_shape );
+	return shape->sdf_terrain;
+}
+
 b2Segment b2Shape_GetSegment( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
