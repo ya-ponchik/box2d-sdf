@@ -39,6 +39,7 @@ float calc_cos(float x) { return b2ComputeCosSin(x).cosine; }
 #define calc_cos cos
 #define b2AbsFloat abs
 #define B2_ASSERT(x)
+#define uint64_t int
 #endif
 
 // https://iquilezles.org/articles/distfunctions2d/
@@ -116,7 +117,7 @@ float circleGrid(b2Vec2 p, float a, float s, float s2)
 // Subtract produces incorrect exterior but correct interior
 // Smoothing dilates space
 // If the ground SDF is animated, it neither wakes bodies nor gives them the correct push velocity
-float sdf_sample_1(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+float sdf_sample_1(b2Vec2 p, b2Vec2 center, b2Vec2 half_size, uint64_t user_data)
 {
 	float c1 = sdCircle(p - b2Vec2(0.0f, -22.0f), 25.0f);
     float c2 = sdCircle(p - b2Vec2(-42.0f, -7.0f), 25.0f);
@@ -134,27 +135,27 @@ float sdf_sample_1(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
 }
 
 // Exact circle
-float sdf_sample_2(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+float sdf_sample_2(b2Vec2 p, b2Vec2 center, b2Vec2 half_size, uint64_t user_data)
 {
     B2_ASSERT(half_size.x == half_size.y);
 	return sdCircle(p - center, half_size.x);
 }
 
 // Exact box
-float sdf_sample_3(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+float sdf_sample_3(b2Vec2 p, b2Vec2 center, b2Vec2 half_size, uint64_t user_data)
 {
 	return sdBox(p - center, half_size);
 }
 
 // Exact infinite wave (but Box2D broad phase tree is not infinite...)
-float sdf_sample_4(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+float sdf_sample_4(b2Vec2 p, b2Vec2 center, b2Vec2 half_size, uint64_t user_data)
 {
 	return sdCircleWave(p - b2Vec2(0.0f, 30.0f), 10.0f, 25.0f) - 1.0f;
 }
 
 // Union produces correct exterior but incorrect interior
 // Smoothing dilates space
-float sdf_sample_5(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+float sdf_sample_5(b2Vec2 p, b2Vec2 center, b2Vec2 half_size, uint64_t user_data)
 {
 	float c1 = sdCircle(p - center - b2Vec2(15.0f, 0.0f), 15.0f);
     float c2 = sdCircle(p - center + b2Vec2(15.0f, 0.0f), 15.0f);
@@ -162,7 +163,7 @@ float sdf_sample_5(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
 }
 
 // Exact arc
-float sdf_sample_6(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+float sdf_sample_6(b2Vec2 p, b2Vec2 center, b2Vec2 half_size, uint64_t user_data)
 {
     const float arc_radius = 4.0f;
     const float outline_radius = 0.7f;
@@ -176,7 +177,7 @@ float sdf_sample_6(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
 
 // An infinite (if you enable it below) procedural level
 // The code taken from https://obelex.itch.io/put-them-back
-float sdf_sample_7(b2Vec2 p, b2Vec2 center, b2Vec2 half_size)
+float sdf_sample_7(b2Vec2 p, b2Vec2 center, b2Vec2 half_size, uint64_t user_data)
 {
     const float scale = 0.1f;
     const bool is_infinite = false;
@@ -203,14 +204,14 @@ float calc_sdf(b2Vec2 p)
     const b2Vec2 none = b2Vec2(0.0f, 0.0f);
 
     if (test_mode == 1)
-        return sdf_sample_7(p, none, none);
+        return sdf_sample_7(p, none, none, 0);
 
     // NOTE: Samples influence each other visually, but not physically.
-    float d = sdf_sample_1(p, none, none);
-    d = b2MinFloat(d, sdf_sample_2(p, sample_2_center, sample_2_half_size));
-    d = b2MinFloat(d, sdf_sample_3(p, sample_3_center, sample_3_half_size));
-    d = b2MinFloat(d, sdf_sample_4(p, none, none));
-    d = b2MinFloat(d, sdf_sample_5(p, sample_5_center, none));
-    d = b2MinFloat(d, sdf_sample_6(p, sample_6_center, none));
+    float d = sdf_sample_1(p, none, none, 0);
+    d = b2MinFloat(d, sdf_sample_2(p, sample_2_center, sample_2_half_size, 0));
+    d = b2MinFloat(d, sdf_sample_3(p, sample_3_center, sample_3_half_size, 0));
+    d = b2MinFloat(d, sdf_sample_4(p, none, none, 0));
+    d = b2MinFloat(d, sdf_sample_5(p, sample_5_center, none, 0));
+    d = b2MinFloat(d, sdf_sample_6(p, sample_6_center, none, 0));
     return d;
 }

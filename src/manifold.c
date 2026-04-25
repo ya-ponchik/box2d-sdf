@@ -48,7 +48,7 @@ static void update_minimum_signed_distance(SDFTerrainShape const* terrain, b2Vec
 	// This increases stability when multiple SDF shapes use a single sampler function and someone collides with both shapes.
 	if (aabb_check == 1 && !(p.x >= left && p.x <= right && p.y >= top && p.y <= bottom))
 		return;
-	float const d = terrain->sampler(p, terrain->center, terrain->half_size);
+	float const d = terrain->sampler(p, terrain->center, terrain->half_size, terrain->user_data);
 	if (d < min->distance_1) {
         min->distance_2 = min->distance_1;
 		min->position_2 = min->position_1;
@@ -136,7 +136,7 @@ b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform x
 	B2_UNUSED( xfB );
 	b2Vec2 const center = b2TransformPoint(xfA, circleA->center);
 	// Optimization. That at least 0.01f margin is important.
-	if (circleB->sampler(center, circleB->center, circleB->half_size) >= circleA->radius + B2_SPECULATIVE_DISTANCE)
+	if (circleB->sampler(center, circleB->center, circleB->half_size, circleB->user_data) >= circleA->radius + B2_SPECULATIVE_DISTANCE)
 		return (b2Manifold){ 0 };
 	MinimumSignedDistance min = init_minimum_signed_distance();
 	int const sides = b2MaxInt(2 * SDF_MIN_HALF_CIRCLE_CHECKS, (int)(2 * B2_PI * circleA->radius / SDF_DT_C));
@@ -153,11 +153,11 @@ b2Manifold collide_sdf_terrain_and_circle_simple(b2Circle const* circleA, b2Tran
 {
 	b2Vec2 const c = b2TransformPoint(xfA, circleA->center);
 	b2Vec2 const n = b2Normalize((b2Vec2){
-		circleB->sampler((b2Vec2){c.x + 0.01f, c.y}, circleB->center, circleB->half_size) - circleB->sampler((b2Vec2){c.x - 0.01f, c.y}, circleB->center, circleB->half_size),
-		circleB->sampler((b2Vec2){c.x, c.y + 0.01f}, circleB->center, circleB->half_size) - circleB->sampler((b2Vec2){c.x, c.y - 0.01f}, circleB->center, circleB->half_size),
+		circleB->sampler((b2Vec2){c.x + 0.01f, c.y}, circleB->center, circleB->half_size, circleB->user_data) - circleB->sampler((b2Vec2){c.x - 0.01f, c.y}, circleB->center, circleB->half_size, circleB->user_data),
+		circleB->sampler((b2Vec2){c.x, c.y + 0.01f}, circleB->center, circleB->half_size, circleB->user_data) - circleB->sampler((b2Vec2){c.x, c.y - 0.01f}, circleB->center, circleB->half_size, circleB->user_data),
 	});
 	b2Vec2 const p = b2MulAdd(c, -circleA->radius, n);
-	float const d = circleB->sampler(p, circleB->center, circleB->half_size);
+	float const d = circleB->sampler(p, circleB->center, circleB->half_size, circleB->user_data);
 	return b2CollideCircles(&(b2Circle){ b2Vec2_zero, -d, false }, (b2Transform){ p, b2Rot_identity }, circleA, xfA);
 }
 

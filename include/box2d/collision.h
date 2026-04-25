@@ -113,13 +113,14 @@ typedef struct b2Circle
 	bool simple_sdf_collision;
 } b2Circle;
 
-typedef float sdf_sampler(b2Vec2 position, b2Vec2 center, b2Vec2 half_size);
+typedef float sdf_sampler(b2Vec2 position, b2Vec2 center, b2Vec2 half_size, uint64_t user_data);
 
 typedef struct SDFTerrainShape {
 	sdf_sampler* sampler;
 	/// The local center. Use this to position a chunk of ground. The body's global position is ignored.
 	b2Vec2 center;
 	b2Vec2 half_size;
+	uint64_t user_data;
 } SDFTerrainShape;
 
 /// A solid capsule can be viewed as two semicircles connected

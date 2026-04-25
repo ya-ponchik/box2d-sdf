@@ -29,32 +29,32 @@ static void spawn_sdf(b2WorldId world)
 
 	if (test_mode == 0) {
 	
-	shape = { sdf_sample_1, { 1.2f, -22.0f },  { 25.0f, 25.0f } };
+	shape = { sdf_sample_1, { 1.2f, -22.0f },  { 25.0f, 25.0f }, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
-	shape = { sdf_sample_1, { -42.0f, -7.0f }, { 25.0f, 25.0f } };
+	shape = { sdf_sample_1, { -42.0f, -7.0f }, { 25.0f, 25.0f }, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
-	shape = { sdf_sample_1, { 42.0f, -7.0f }, { 25.0f, 25.0f } };
+	shape = { sdf_sample_1, { 42.0f, -7.0f }, { 25.0f, 25.0f }, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
-	shape = { sdf_sample_2, sample_2_center, sample_2_half_size };
+	shape = { sdf_sample_2, sample_2_center, sample_2_half_size, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
-	shape = { sdf_sample_3, sample_3_center, sample_3_half_size };
+	shape = { sdf_sample_3, sample_3_center, sample_3_half_size, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
-	shape = { sdf_sample_4, { 0.0f, 42.5f }, { 1000.0f, 14.0f } };
+	shape = { sdf_sample_4, { 0.0f, 42.5f }, { 1000.0f, 14.0f }, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
-	shape = { sdf_sample_5, sample_5_center, { 30.0f, 17.0f } };
+	shape = { sdf_sample_5, sample_5_center, { 30.0f, 17.0f }, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
-	shape = { sdf_sample_6, sample_6_center, { 5.0f, 5.0f } };
+	shape = { sdf_sample_6, sample_6_center, { 5.0f, 5.0f }, 0 };
 	create_sdf_terrain_shape(body, &shape_def, &shape);
 
 	} else if (test_mode == 1) {
-		shape = { sdf_sample_7, { 0.0f, -500.0f }, { 250.0f, 550.0f } };
+		shape = { sdf_sample_7, { 0.0f, -500.0f }, { 250.0f, 550.0f }, 0 };
 		create_sdf_terrain_shape(body, &shape_def, &shape);
 	}
 }

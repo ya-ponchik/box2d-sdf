@@ -467,7 +467,7 @@ bool b2PointInCircle( b2Vec2 point, const b2Circle* shape )
 
 bool point_in_sdf_terrain(b2Vec2 point, SDFTerrainShape const* shape)
 {
-	return shape->sampler(point, shape->center, shape->half_size) <= 0.0f;
+	return shape->sampler(point, shape->center, shape->half_size, shape->user_data) <= 0.0f;
 }
 
 bool b2PointInCapsule( b2Vec2 point, const b2Capsule* shape )
@@ -602,7 +602,7 @@ b2CastOutput raycast_sdf_terrain(b2RayCastInput const* input, SDFTerrainShape co
 	// Sampling provides the distance to the closest surface.
 	// If the SDF is incorrect, that distance can be less than the actual distance, but not greater, I think.
 
-	float const first_sample = shape->sampler(input->origin, shape->center, shape->half_size);
+	float const first_sample = shape->sampler(input->origin, shape->center, shape->half_size, shape->user_data);
 	if (first_sample <= 0) {
 		output.point = input->origin;
 		output.hit = true;
@@ -615,15 +615,15 @@ b2CastOutput raycast_sdf_terrain(b2RayCastInput const* input, SDFTerrainShape co
 		if (input->maxFraction * ray_length < traveled_length)
 			return output;
 		b2Vec2 const p = b2MulAdd(input->origin, traveled_length, ray_direction);
-		float const sample = shape->sampler(p, shape->center, shape->half_size);
+		float const sample = shape->sampler(p, shape->center, shape->half_size, shape->user_data);
 		if (sample >= 0.01f) {
 			traveled_length += sample;
 			continue;
 		}
 		output.fraction = traveled_length / ray_length;
 		output.normal = b2Normalize((b2Vec2){
-			shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size) - shape->sampler((b2Vec2){p.x - 0.01f, p.y}, shape->center, shape->half_size),
-			shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size) - shape->sampler((b2Vec2){p.x, p.y - 0.01f}, shape->center, shape->half_size),
+			shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size, shape->user_data) - shape->sampler((b2Vec2){p.x - 0.01f, p.y}, shape->center, shape->half_size, shape->user_data),
+			shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size, shape->user_data) - shape->sampler((b2Vec2){p.x, p.y - 0.01f}, shape->center, shape->half_size, shape->user_data),
 		});
 		output.point = p;
 		output.hit = true;
