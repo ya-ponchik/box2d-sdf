@@ -612,6 +612,9 @@ B2_API b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* in
 /// Get a copy of the shape's circle. Asserts the type is correct.
 B2_API b2Circle b2Shape_GetCircle( b2ShapeId shapeId );
 
+/// Get a copy of the shape's circle. Asserts the type is correct.
+B2_API SDFTerrainShape b2Shape_GetSDFTerrain( b2ShapeId shapeId );
+
 /// Get a copy of the shape's line segment. Asserts the type is correct.
 B2_API b2Segment b2Shape_GetSegment( b2ShapeId shapeId );
 
