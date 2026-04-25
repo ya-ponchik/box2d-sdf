@@ -621,14 +621,14 @@ b2CastOutput raycast_sdf_terrain(b2RayCastInput const* input, SDFTerrainShape co
 			continue;
 		}
 		output.fraction = traveled_length / ray_length;
-		// output.normal = b2Normalize((b2Vec2){
-		// 	shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size, shape->user_data) - shape->sampler((b2Vec2){p.x - 0.01f, p.y}, shape->center, shape->half_size, shape->user_data),
-		// 	shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size, shape->user_data) - shape->sampler((b2Vec2){p.x, p.y - 0.01f}, shape->center, shape->half_size, shape->user_data),
-		// });
 		output.normal = b2Normalize((b2Vec2){
-			shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size, shape->user_data) - sample,
-			shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size, shape->user_data) - sample
+			shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size, shape->user_data) - shape->sampler((b2Vec2){p.x - 0.01f, p.y}, shape->center, shape->half_size, shape->user_data),
+			shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size, shape->user_data) - shape->sampler((b2Vec2){p.x, p.y - 0.01f}, shape->center, shape->half_size, shape->user_data),
 		});
+		// output.normal = b2Normalize((b2Vec2){
+		// 	shape->sampler((b2Vec2){p.x + 0.01f, p.y}, shape->center, shape->half_size, shape->user_data) - sample,
+		// 	shape->sampler((b2Vec2){p.x, p.y + 0.01f}, shape->center, shape->half_size, shape->user_data) - sample
+		// });
 		output.point = p;
 		output.hit = true;
 		return output;
