@@ -9,6 +9,7 @@ export let artboard_size = svg => svg.match(/viewBox="([^"]+)"/)[1].split(' ').s
 // and convert quadratic beziers to cubics with zero loss (.qtToC())
 // The content of the path element (sub-paths) is rendered using the SDF::svg function
 // Individual paths are combined using a boolean union operation (std::min(d1, d2))
+// (note that the above can result in an incorrect SDF interior if the paths intersect)
 export let process_svg = (svg, callback, precision = 0.1) => {
     let x, y, segments = [], qbeziers = []
     for (const [, d] of svg.matchAll(/<path[^>]*\bd="([^"]+)"/g)) {
