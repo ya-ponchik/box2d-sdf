@@ -3,11 +3,13 @@ This is an experiment in integrating SDF (signed distance field) into Box2D 3.1.
 # Описание на русском
 Это эксперимент по интегрированию SDF (signed distance field) в Box2D 3.1.1 (тегированный релиз). Коллизии работают неплохо. На примере полигонов: они не проваливаются в землю; их можно сложить в стабильную башенку; они скользят, если трение низкое, или кувыркаются, если трение высокое; тела уходят в сон. Не работает функционал, которому нужно вычислять расстояние между шейпами: OverlapShape, CastShape, continuous collision, сенсоры и бог знает, что ещё. В демо-приложение добавлены примеры. Рекомендую клонировать репозиторий, собрать демо-приложение, почитать комментарии в добавленном коде (В GitHub Desktop, например, выбрать коммиты от SDF terrain shape до самого свежего, чтобы увидеть совокупные изменения). 
 # Some GIFs
-![Box](box.gif)
 ![123](123.gif)
 ![Procedural](procedural.gif)
 # Bonus
 The SDF.h file contains functions I use in my game. It requires the GLM library and at least C++20. The ParseSVG.js file contains a standalone JavaScript script for parsing an SVG file into a format compatible with SDF::svg. The file ground.svg is an example of what my SVG files look like
+### What it looks like in-game
+![IQ's coloring](2026-04-28T11_44_04.135Z-2.png)
+![Antialiased](2026-04-28T11_44_18.321Z-2.png)
 # TODO
 - Shape cast of circle (circle cast) vs. exact SDF is simply a raycast with `d - radius`.
 - Making the gradient computation a user-defined callback can be useful https://iquilezles.org/articles/distgradfunctions2d/. Also bounding boxes https://iquilezles.org/articles/bboxes2d/
