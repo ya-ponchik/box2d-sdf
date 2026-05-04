@@ -155,13 +155,18 @@ inline double winding_sign(glm::dvec2 p, glm::dvec2 a, glm::dvec2 b)
 // The shapes don't look great artistically in those glitched spots anyway.
 //
 // even odd fill rule
-inline double svg(glm::dvec2 p, std::span<Segment const> segments, std::span<QBezier const> beziers)
+inline double svg(glm::dvec2 p, std::span<Segment const> segments, std::span<QBezier const> beziers, auto&& optimization_condition)
 {
     using namespace detail;
 
     auto d = 1e10;
     auto winding = 1.0;
     for (auto const [a, b, c] : beziers) {
+        // Experiment: return false if unknown.
+        if (optimization_condition(p, a, b, c)) {
+            winding *= winding_sign(p, a, c);
+            continue;
+        }
         // NOTE: I use a different Bezier function than the original shader
         auto const sd = quadratic_bezier(p, a, b, c);
         d = std::min(d, std::abs(sd));
