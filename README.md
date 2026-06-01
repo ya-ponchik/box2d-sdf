@@ -1,4 +1,3 @@
-# English Description
 This is an experiment in integrating SDF (signed distance field) into Box2D 3.1.1 (tagged release). The collisions work quite well. Using polygons as an example: they do not fall through the ground; they can be stacked into a stable tower; they slide if friction is low, or tumble if friction is high; bodies go to sleep. The functionality that requires calculating the distance between shapes does not work: OverlapShape, CastShape, continuous collision, sensors, and who knows what else. Examples have been added to the demo application. I recommend cloning the repository, building the demo application, and reading the comments in the added code (in GitHub Desktop, for example, select all commits from 'SDF terrain shape' to the most recent to see the combined changes).
 # Some GIFs
 ![123](123.gif)
