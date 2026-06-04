@@ -198,8 +198,8 @@ inline uint8_t encode(double v, double min, double max)
 inline auto normal(auto&& sampler, glm::dvec2 position, double epsilon)
 {
     return glm::normalize(glm::dvec2{
-        sampler({position.x + epsilon, position.y}) - sampler({position.x - epsilon, position.y}),
-        sampler({position.x, position.y + epsilon}) - sampler({position.x, position.y - epsilon})
+        sampler(glm::dvec2{position.x + epsilon, position.y}) - sampler(glm::dvec2{position.x - epsilon, position.y}),
+        sampler(glm::dvec2{position.x, position.y + epsilon}) - sampler(glm::dvec2{position.x, position.y - epsilon})
     });
 }
 
@@ -208,8 +208,8 @@ inline auto normal_fast(auto&& sampler, glm::dvec2 position, double epsilon)
 {
     auto const dc = sampler(position);
     return glm::normalize(glm::dvec2{
-		sampler({position.x + epsilon, position.y}) - dc,
-		sampler({position.x, position.y + epsilon}) - dc
+		sampler(glm::dvec2{position.x + epsilon, position.y}) - dc,
+		sampler(glm::dvec2{position.x, position.y + epsilon}) - dc
 	});
 }
 } // namespace SDF
