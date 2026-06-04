@@ -110,7 +110,7 @@ inline double point(glm::dvec2 p, glm::dvec2 a)
 // carefully translated to c++ and doubles
 inline double smooth_union(double a, double b, double k)
 {
-    k *= 4.0;
+    // k *= 4.0;
     auto const h = std::max(k-std::abs(a-b),0.0);
     return std::min(a, b) - h*h*0.25/k;
 }
