@@ -194,4 +194,22 @@ inline uint8_t encode(double v, double min, double max)
     auto const clamped = std::clamp(v, min, max);
     return static_cast<uint8_t>((clamped - min) * scale + 0.5);
 }
+
+inline auto normal(auto&& sampler, glm::dvec2 position, double epsilon)
+{
+    return glm::normalize(glm::dvec2{
+        sampler({position.x + epsilon, position.y}) - sampler({position.x - epsilon, position.y}),
+        sampler({position.x, position.y + epsilon}) - sampler({position.x, position.y - epsilon})
+    });
+}
+
+// less correct, but faster
+inline auto normal_fast(auto&& sampler, glm::dvec2 position, double epsilon)
+{
+    auto const dc = sampler(position);
+    return glm::normalize(glm::dvec2{
+		sampler({position.x + epsilon, position.y}) - dc,
+		sampler({position.x, position.y + epsilon}) - dc
+	});
+}
 } // namespace SDF
