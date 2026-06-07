@@ -121,6 +121,9 @@ typedef struct SDFTerrainShape {
 	b2Vec2 center;
 	b2Vec2 half_size;
 	uint64_t user_data;
+	// Optimization
+	// I realized that my game never utilizes raycast normals, but it does perform four costly SDF samples upon collision.
+	bool no_raycast_normal;
 } SDFTerrainShape;
 
 /// A solid capsule can be viewed as two semicircles connected
