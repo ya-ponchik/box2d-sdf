@@ -13,6 +13,5 @@ The SDF.h file contains functions I use in my game. It requires the GLM library 
 - Shape cast of circle (circle cast) vs. exact SDF is simply a raycast with `d - radius`.
 - Making the gradient computation a user-defined callback can be useful https://iquilezles.org/articles/distgradfunctions2d/. Also bounding boxes https://iquilezles.org/articles/bboxes2d/
 - Implement kinematic SDF bodies. To do this, first ensure that the body transform is not ignored.
-- also try compound shapes
 - bump box2d to latest tagged release
 - https://www.shadertoy.com/view/WstcW4 moving distance field (using dt on gradiant)
