@@ -92,7 +92,6 @@ set(BOX2D_SAMPLE_FILES
 	sample_shapes.cpp
 	sample_stacking.cpp
 	sample_world.cpp
-	sample_sdf_terrain.cc
 	shader.cpp
 	shader.h)
 

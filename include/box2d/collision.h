@@ -108,9 +108,6 @@ typedef struct b2Circle
 
 	/// The radius
 	float radius;
-
-	/// Simple math instead of brute force is cooler and funnier, but it's much less stable. It can be OK for small circles.
-	bool simple_sdf_collision;
 } b2Circle;
 
 typedef float sdf_sampler(b2Vec2 position, b2Vec2 center, b2Vec2 half_size, uint64_t user_data);
@@ -580,18 +577,11 @@ typedef struct b2Manifold
 B2_API b2Manifold b2CollideCircles( const b2Circle* circleA, b2Transform xfA, const b2Circle* circleB, b2Transform xfB );
 
 /// Compute the contact manifold between an SDF terrain and a circle
-B2_API b2Manifold collide_sdf_terrain_and_circle(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check);
-
-/// Compute the contact manifold between an SDF terrain and a circle
-/// See b2Circle.simple_sdf_collision for more info
 B2_API b2Manifold collide_sdf_terrain_and_circle_simple(b2Circle const* circleA, b2Transform xfA, SDFTerrainShape const* circleB);
 
 /// Compute the contact manifold between a capsule and circle
 B2_API b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2Transform xfA, const b2Circle* circleB,
 											 b2Transform xfB );
-
-/// Compute the contact manifold between an SDF terrain and a capsule
-B2_API b2Manifold collide_sdf_terrain_and_capsule(b2Capsule const* capsuleA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check);
 
 /// Compute the contact manifold between an segment and a circle
 B2_API b2Manifold b2CollideSegmentAndCircle( const b2Segment* segmentA, b2Transform xfA, const b2Circle* circleB,
@@ -600,9 +590,6 @@ B2_API b2Manifold b2CollideSegmentAndCircle( const b2Segment* segmentA, b2Transf
 /// Compute the contact manifold between a polygon and a circle
 B2_API b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA, const b2Circle* circleB,
 											 b2Transform xfB );
-
-/// Compute the contact manifold between an SDF terrain and a polygon
-B2_API b2Manifold collide_sdf_terrain_and_polygon(b2Polygon const* polygonA, b2Transform xfA, SDFTerrainShape const* circleB, b2Transform xfB, int aabb_check);
 
 /// Compute the contact manifold between a capsule and circle
 B2_API b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const b2Capsule* capsuleB, b2Transform xfB );
