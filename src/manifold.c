@@ -28,7 +28,7 @@ b2Manifold collide_sdf_terrain_and_circle_simple(b2Circle const* circleA, b2Tran
 	});
 	b2Vec2 const p = b2MulAdd(c, -circleA->radius, n);
 	float const d = circleB->sampler(p, circleB->center, circleB->half_size, circleB->user_data);
-	return b2CollideCircles(&(b2Circle){ b2Vec2_zero, -d, false }, (b2Transform){ p, b2Rot_identity }, circleA, xfA);
+	return b2CollideCircles(&(b2Circle){ b2Vec2_zero, -d }, (b2Transform){ p, b2Rot_identity }, circleA, xfA);
 }
 
 static b2Polygon b2MakeCapsule( b2Vec2 p1, b2Vec2 p2, float radius )
