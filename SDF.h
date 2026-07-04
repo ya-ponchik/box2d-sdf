@@ -188,10 +188,10 @@ inline double svg(glm::dvec2 p, std::span<Segment const> segments, std::span<QBe
 // 1. Clamp to the min/max range
 // 2. Map to the byte range (0-255)
 // 3. Round to the nearest integer (improves precision)
-inline uint8_t encode(double v, double min, double max)
+inline uint8_t encode(double v, double min, double max, bool already_clamped = false)
 {
     auto const scale = 255.0 / (max - min);
-    auto const clamped = std::clamp(v, min, max);
+    auto const clamped = already_clamped ? v : std::clamp(v, min, max);
     return static_cast<uint8_t>((clamped - min) * scale + 0.5);
 }
 
